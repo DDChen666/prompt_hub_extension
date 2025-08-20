@@ -1,0 +1,20 @@
+語言/框架與核心工具:
+- TypeScript: 宣告 ^5.4.5（devDependencies），實測版本: UNVERIFIED
+- React: ^18.3.1
+- 打包器: Vite ^5.3（CRX 插件 @crxjs/vite-plugin ^1.0.14）
+- 測試: Vitest ^1.6（單元）、Playwright ^1.46（E2E）
+- Lint/格式: ESLint ^8.57, Prettier ^3.2
+- 套件管理器: pnpm（鎖檔存在 pnpm-lock.yaml）[[memory:6745855]]
+
+Node.js 版本（推測）:
+- Vite 5 需要 Node >= 18。實際 Node 版本: UNVERIFIED。
+
+瀏覽器/平台:
+- MV3 擴充（Chrome/Edge）。背景 service worker 以 ES module 模式打包。
+
+資料庫/快取/訊息佇列:
+- 無傳統後端；使用 IndexedDB（`src/lib/storage/indexed.ts`）。
+
+雲服務/外部 API:
+- LLM（Gemini）支援程式碼存在；實際金鑰與流量策略未提供（UNVERIFIED）。
+

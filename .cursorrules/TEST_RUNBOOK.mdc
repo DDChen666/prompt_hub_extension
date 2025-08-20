@@ -1,0 +1,16 @@
+測試分類:
+- 單元: Vitest（tests/unit/*.spec.ts）
+- 端對端: Playwright（tests/e2e/overlay.spec.ts）
+
+最小煙霧測試命令（UNVERIFIED_RUNTIME）:
+```bash
+cd /Users/chenxiuyuan/Desktop/CODE/prompt_hub_extension/extension
+pnpm test:unit
+pnpm test:e2e || true
+```
+
+測試資料/夾具:
+- 主要使用 JSDOM（單元）與內建瀏覽器（E2E）。
+
+覆蓋率/閾值:
+- 未設定（UNVERIFIED）。

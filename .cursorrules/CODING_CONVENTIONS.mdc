@@ -1,0 +1,16 @@
+目錄與命名:
+- TypeScript/React 原則：檔名以功能導向；React 元件以 PascalCase。
+
+型別/風格工具:
+- TypeScript: strict 模式（`noImplicitAny`）。
+- ESLint + Prettier：執行 `pnpm lint`（UNVERIFIED）。
+
+PR/Commit 規範:
+- 小補丁（≤10 檔 ≤300 LOC）。
+- 說明動機、風險、回退方案。
+
+錯誤處理與日誌:
+- 背景/內容腳本以 console 為主；避免吞錯誤。
+
+i18n/a11y/安全:
+- 避免在內容腳本中暴露敏感金鑰；LLM 金鑰使用受限存儲（UNVERIFIED）。

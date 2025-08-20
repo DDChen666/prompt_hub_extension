@@ -1,9 +1,27 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { listItems, onChanged, storage, upsertItem, getFlags } from '../lib/storage/indexed';
+import { listItems, onChanged, storage, upsertItem, getFlags, deleteItem } from '../lib/storage/indexed';
 import { filterAndSort } from '../lib/search/query';
 import type { PromptItem } from '../contracts/schemas';
 import { builtins } from '../lib/templates';
 import { getLlmClient } from '../lib/llm';
+
+function GearButton() {
+  return (
+    <button
+      aria-label="開啟設定"
+      title="開啟設定"
+      onClick={() => chrome.runtime.openOptionsPage()}
+      style={{
+        position: 'absolute', top: 8, right: 8,
+        padding: 6, borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer'
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+        <path fill="currentColor" d="M19.14,12.94a7.43,7.43,0,0,0,.05-1l2-1.55a.5.5,0,0,0,.12-.64l-1.9-3.29a.5.5,0,0,0-.6-.22l-2.34,1a7.22,7.22,0,0,0-1.73-1L14.4,2.7a.5.5,0,0,0-.49-.4H10.09a.5.5,0,0,0-.49.4L9,4.24a7.22,7.22,0,0,0-1.73,1l-2.34-1a.5.5,0,0,0-.6.22L2.43,7.79a.5.5,0,0,0,.12.64l2,1.55a7.43,7.43,0,0,0,0,2l-2,1.55a.5.5,0,0,0-.12.64l1.9,3.29a.5.5,0,0,0,.6.22l2.34-1a7.22,7.22,0,0,0,1.73,1l.61,1.54a.5.5,0,0,0,.49.4h3.82a.5.5,0,0,0,.49-.4l.61-1.54a7.22,7.22,0,0,0,1.73-1l2.34,1a.5.5,0,0,0,.6-.22l1.9-3.29a.5.5,0,0,0-.12-.64ZM12,15.5A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z"/>
+      </svg>
+    </button>
+  );
+}
 
 export default function App() {
   const [items, setItems] = useState<PromptItem[]>([]);
@@ -117,7 +135,9 @@ export default function App() {
   }
 
   return (
-    <div style={{ width: 360, padding: 12, fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ position: 'relative' }}>
+      <GearButton />
+      <div style={{ width: 360, padding: 12, fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Prompt Organizer (MVP)</h1>
       {readonly && (
         <div style={{ background: '#fff7ed', color: '#9a3412', border: '1px solid #fed7aa', padding: 8, borderRadius: 6, marginBottom: 8, fontSize: 12 }}>
@@ -170,18 +190,46 @@ export default function App() {
             <div style={{ color: '#555', fontSize: 12, whiteSpace: 'pre-wrap' }}>{it.content}</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: 11, color: '#999' }}>{new Date(it.updatedAt).toLocaleString()}</div>
-              <button
-                onClick={() => onCopy(it.content, it.id)}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  border: '1px solid #ddd',
-                  background: '#f8f8f8',
-                  cursor: 'pointer',
-                }}
-              >
-                {copiedId === it.id ? '已複製' : '複製'}
-              </button>
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <button
+                  onClick={() => onCopy(it.content, it.id)}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #ddd',
+                    background: '#f8f8f8',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {copiedId === it.id ? '已複製' : '複製'}
+                </button>
+                {!readonly && (
+                  <button
+                    aria-label="刪除"
+                    title="刪除"
+                    onClick={async () => {
+                      if (!confirm('確定要刪除此 Prompt？此操作無法復原。')) return;
+                      await deleteItem(it.id);
+                      const next = await listItems();
+                      setItems(next);
+                    }}
+                    style={{
+                      padding: '6px',
+                      borderRadius: 6,
+                      border: '1px solid #fca5a5',
+                      background: '#fff5f5',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                      <path fill="#dc2626" d="M9 3h6a1 1 0 0 1 1 1v2h4v2H4V6h4V4a1 1 0 0 1 1-1Zm2 4h2V5h-2v2ZM7 10h2v9H7v-9Zm4 0h2v9h-2v-9Zm4 0h2v9h-2v-9Z"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
             </div>
             {manualCopyId === it.id && (
               <div style={{ marginTop: 8 }}>
@@ -272,5 +320,6 @@ export default function App() {
         </div>
       </div>
     </div>
+  </div>
   );
 }

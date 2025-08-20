@@ -1,0 +1,13 @@
+MVE-001 基本建置與測試
+- 目的: 驗證可安裝/型檢/建置/單元測試
+- 命令（UNVERIFIED_RUNTIME）:
+```bash
+cd /Users/chenxiuyuan/Desktop/CODE/prompt_hub_extension/extension
+pnpm i --frozen-lockfile || npm ci
+pnpm typecheck || npx tsc -p tsconfig.json --noEmit
+pnpm build || npm run build --if-present
+pnpm test:unit || npm test --if-present
+```
+- 結果: 未執行（殼層不可用）
+- 日誌摘要: N/A
+- 結論: 待在本機/CI 執行後更新

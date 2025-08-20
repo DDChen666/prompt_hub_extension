@@ -1,0 +1,40 @@
+目錄樹（摘要，排除常見雜訊）:
+
+prompt_hub_extension/
+  └─ extension/
+     ├─ manifest.json               # MV3 設定（popup/options/background/權限/快捷鍵）
+     ├─ package.json                # 指令/依賴
+     ├─ vite.config.ts              # Vite + CRX 插件設定
+     ├─ tsconfig.json               # TS 編譯選項（strict, bundler resolution）
+     ├─ README.md                   # 打包/安裝/發版說明
+     ├─ scripts/manifest-guard.mjs  # manifest 檢查腳本
+     ├─ src/
+     │  ├─ background/index.ts      # 背景 service worker 入口
+     │  ├─ content/index.ts         # 內容腳本入口
+     │  ├─ content/overlay/App.tsx  # Overlay React App
+     │  ├─ contracts/schemas.ts     # Zod schema/DTO
+     │  ├─ lib/**                   # dom/llm/search/storage/templates
+     │  ├─ options/{App.tsx,main.tsx}
+     │  ├─ popup/{App.tsx,main.tsx}
+     │  └─ styles/tailwind.css
+     ├─ tests/
+     │  ├─ unit/*.spec.ts           # Vitest 單元
+     │  └─ e2e/overlay.spec.ts      # Playwright 端對端
+     └─ test-results/               # 測試輸出（如有）
+
+檔案角色索引:
+- 入口/路由: `manifest.json`（定義 popup/options/background），`src/background/index.ts`, `src/content/index.ts`
+- 設定: `package.json`, `vite.config.ts`, `tsconfig.json`
+- 資料/契約: `src/contracts/schemas.ts`
+- 資料層/儲存: `src/lib/storage/indexed.ts`
+- LLM/外部 API: `src/lib/llm/*`
+- 搜尋/模板: `src/lib/search/query.ts`, `src/lib/templates/index.ts`
+- UI: `src/content/overlay/App.tsx`, `src/options/*`, `src/popup/*`
+- 測試: `tests/unit/*`, `tests/e2e/*`
+
+單/多模組:
+- 單一 package（非 monorepo）。
+
+外部服務:
+- WebExtension API（`webextension-polyfill`）。LLM（Gemini）相關程式碼存在但金鑰/環境變數未在 repo 中（UNVERIFIED）。
+

@@ -1,0 +1,36 @@
+生成時間: 2025-08-20T00:00:00Z
+此集合版本: v1.0
+
+專案摘要:
+- Chrome/Edge 擴充功能（Manifest V3），以 Vite + React + TypeScript 建置。
+- 主要目標：Prompt 管理與站點策略（Allow/Block/Copy-only），含 Overlay、Popup、Options，背景為 service worker。
+
+技術棧總覽:
+- Node.js (版本: UNVERIFIED)
+- 套件管理器: pnpm [[memory:6745855]]
+- 前端: React 18, TypeScript 5
+- 打包: Vite 5（CRX 插件）
+- 測試: Vitest（單元）、Playwright（E2E）
+- Lint/格式: ESLint, Prettier
+
+入口與啟動腳本:
+- 打包/開發: `pnpm dev`, `pnpm build`
+- 測試: `pnpm test`, `pnpm test:unit`, `pnpm test:e2e`
+- 其他: `pnpm guard`（manifest 檢查）, `pnpm zip`（打包 dist.zip）
+- MV3 背景入口: `src/background/index.ts`（透過 CRX/Vite 打包）
+
+關鍵路徑:
+- 設定/建置: `package.json`, `vite.config.ts`, `tsconfig.json`, `manifest.json`
+- 原始碼: `src/**`（background/content/options/popup/lib 等）
+- 測試: `tests/unit/**`, `tests/e2e/**`
+
+CI/CD 概況:
+- CI 未檢出。README 提及手動版本標籤與釋出流程（UNVERIFIED）。
+
+最近一次指紋摘要:
+- 檔數: 28（基於目前關鍵檔案估計），新增: baseline，刪除: 0，異動: 0（首次建立）
+
+未決議題清單:
+- Node/pnpm/Vite/Vitest/Playwright 實際版本未量測（UNVERIFIED）。
+- 型檢/建置/測試未在本機驗證（UNVERIFIED_RUNTIME）。
+

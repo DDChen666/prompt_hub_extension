@@ -1,0 +1,13 @@
+風險登錄表:
+- R-001 擴充權限/策略誤設導致功能不可用（等級:中, 狀態:開啟）
+  - 監測: badge 提示/console 錯誤
+  - 緩解: Options 可切換 Disable Overlay/Readonly；回退至上一版 dist.zip
+- R-002 LLM 金鑰或配額問題（等級:中, 狀態:未驗證）
+  - 監測: 失敗率/錯誤碼
+  - 緩解: 功能開關 Disable LLM；本地純離線模式
+- R-003 型別/建置在 Node 版本差異下失敗（等級:中, 狀態:未驗證）
+  - 緩解: Node >=18；鎖定依賴
+
+假設清單:
+- A-001 使用 pnpm 作為包管理器（已驗證：鎖檔存在）。
+- A-002 E2E 需 `npx playwright install`（未驗證）。

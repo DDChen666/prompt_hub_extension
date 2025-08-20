@@ -1,0 +1,20 @@
+{
+  "scannedAt": "2025-08-20T00:00:00Z",
+  "files": [
+    { "path": "extension/package.json", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/pnpm-lock.yaml", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/manifest.json", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/vite.config.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tsconfig.json", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/src/background/index.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/src/content/index.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/src/content/overlay/App.tsx", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/src/contracts/schemas.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/src/lib/storage/indexed.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tests/unit/paste.spec.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tests/unit/query.spec.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tests/unit/llm.spec.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tests/unit/schemas.spec.ts", "size": 0, "sha256": "UNVERIFIED" },
+    { "path": "extension/tests/unit/storage.spec.ts", "size": 0, "sha256": "UNVERIFIED" }
+  ]
+}

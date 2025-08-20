@@ -1,0 +1,32 @@
+工具與版本狀態（以檔案推論，未實測）:
+- Node.js: UNVERIFIED（建議 >= 18）
+- pnpm: UNVERIFIED（鎖檔存在）
+- Vite: 宣告 ^5.3 → UNVERIFIED
+- TypeScript: 宣告 ^5.4 → UNVERIFIED
+- Vitest: 宣告 ^1.6 → UNVERIFIED
+- Playwright: 宣告 ^1.46 → UNVERIFIED
+
+安裝/升降級建議:
+- 使用 Homebrew 安裝 Node 18/20 LTS；以 `npm i -g pnpm` 安裝 pnpm。
+
+最小可行環境腳本（UNVERIFIED_RUNTIME）:
+
+```bash
+# 於專案目錄
+cd /Users/chenxiuyuan/Desktop/CODE/prompt_hub_extension/extension
+
+# 安裝依賴（優先 pnpm）
+pnpm i --frozen-lockfile || npm ci
+
+# 型別檢查
+pnpm typecheck || npx tsc -p tsconfig.json --noEmit
+
+# 建置
+pnpm build || npm run build --if-present
+
+# 測試（單元與 E2E；E2E 需瀏覽器）
+pnpm test:unit || npm run test --if-present
+pnpm test:e2e || npx playwright test || true
+```
+
+狀態標記: 全部 UNVERIFIED_RUNTIME（殼層未執行）。

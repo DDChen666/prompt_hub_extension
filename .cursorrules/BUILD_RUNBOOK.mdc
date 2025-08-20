@@ -1,0 +1,27 @@
+本機建置與啟動:
+
+1) 安裝依賴
+```bash
+cd /Users/chenxiuyuan/Desktop/CODE/prompt_hub_extension/extension
+pnpm i --frozen-lockfile || npm ci
+```
+
+2) 開發模式（UNVERIFIED_RUNTIME）
+```bash
+pnpm dev
+```
+
+3) 產生發佈包（UNVERIFIED_RUNTIME）
+```bash
+pnpm build && pnpm guard && pnpm zip
+```
+
+4) 載入擴充
+- Chrome/Edge → 擴充功能 → 開發人員模式 → 載入 `dist/` 或拖入 `dist.zip`
+
+必要環境變數/設定:
+- LLM/Gemini 金鑰（若使用 `src/lib/llm/*`，UNVERIFIED）。
+
+常見故障排除:
+- Vite 5 需 Node >= 18。
+- Playwright 測試需安裝瀏覽器：`npx playwright install`（UNVERIFIED_RUNTIME）。
