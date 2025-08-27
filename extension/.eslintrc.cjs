@@ -27,4 +27,8 @@ module.exports = {
     'react/react-in-jsx-scope': 'off',
   },
   ignorePatterns: ['dist', 'node_modules'],
+  overrides: [
+    // 允许 *.d.ts 使用 any，避免宣告档阻塞 Lint
+    { files: ['**/*.d.ts'], rules: { '@typescript-eslint/no-explicit-any': 'off' } }
+  ]
 };

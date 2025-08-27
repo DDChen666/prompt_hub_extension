@@ -1,16 +1,14 @@
 import { test, expect, chromium, BrowserContext, Page } from '@playwright/test';
 
 // Guard RUN_E2E without Node types
-declare const process: any;
-const runE2E = typeof process !== 'undefined' && process && process.env && process.env.RUN_E2E === 'true';
+declare const process: { env?: Record<string, string> };
+const runE2E = process?.env?.RUN_E2E === 'true';
 if (!runE2E) test.skip(true, 'E2E disabled by default');
 
 import os from 'node:os';
 const fileURLToPath: any = (x: string) => x;
 import path from 'node:path';
 import fs from 'node:fs';
- 
-if (!runE2E) test.skip(true, 'E2E disabled by default');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
