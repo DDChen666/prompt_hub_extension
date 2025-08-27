@@ -17,6 +17,13 @@ export function parseQuery(q: string): { text: string[]; tags: string[]; group?:
   return { text, tags, group };
 }
 
+export function filterByGroup(items: PromptItem[], groupId: string | null): PromptItem[] {
+  if (groupId === null) {
+    return items; // 顯示所有項目
+  }
+  return items.filter(item => item.group === groupId);
+}
+
 function itemMatches(item: PromptItem, q: { text: string[]; tags: string[]; group?: string }): number | null {
   // AND 條件：每個 text 都需至少命中 title 或 content；所有 tag 都需存在；group 需相等
   const titleLc = item.title.toLowerCase();

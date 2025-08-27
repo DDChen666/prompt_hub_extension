@@ -29,7 +29,7 @@ pnpm test && pnpm test:e2e
 pnpm typecheck && pnpm lint
 ```
 
-## 版本快照（更新于：2025-08-26）
+## 版本快照（更新于：2025-08-27）
 - Node.js: v22.18.0 / npm: 10.9.3 / pnpm: 10.15.0
 - TypeScript: 5.4.5 / React: 18.3.1 / Vite: 5.3.1
 - Zod: 3.23.8 / Vitest: 1.6.0 / Playwright: 1.46.0

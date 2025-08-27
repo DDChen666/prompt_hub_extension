@@ -3,6 +3,29 @@ import { z } from 'zod';
 export const ErrorCode = z.enum(['E_TIMEOUT', 'E_RATE', 'E_UPSTREAM', 'E_SCHEMA', 'E_DENY']);
 export type ErrorCode = z.infer<typeof ErrorCode>;
 
+// Group 契約 - AIDEV-CONTRACT: 群組數據結構
+// 注意：群組功能需向後兼容現有 group 字段
+// 破壞性變更需要 v2 + 遷移 + 回滾
+// 預設顏色採用淡雅漸層色主題
+const GradientColor = z.enum([
+  'blue',      // 淡藍色漸層
+  'green',     // 淡綠色漸層  
+  'purple',    // 淡紫色漸層
+  'orange',    // 淡橙色漸層
+  'pink',      // 淡粉色漸層
+  'custom'     // 自訂顏色
+]);
+export type GradientColor = z.infer<typeof GradientColor>;
+
+export const Group = z.object({
+  id: z.string(),
+  name: z.string().min(1).max(50),
+  color: GradientColor.default('blue'),
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+export type Group = z.infer<typeof Group>;
+
 // PromptItem 契約
 export const PromptItem = z.object({
   id: z.string(),

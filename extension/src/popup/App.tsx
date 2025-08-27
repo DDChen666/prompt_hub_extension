@@ -1,9 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { listItems, onChanged, storage, upsertItem, getFlags, deleteItem } from '../lib/storage/indexed';
-import { filterAndSort } from '../lib/search/query';
-import type { PromptItem } from '../contracts/schemas';
+import { 
+  listItems, onChanged, storage, upsertItem, getFlags, deleteItem, 
+  listGroups, createGroup, onGroupsChanged, deleteGroup
+} from '../lib/storage/indexed';
+import { filterAndSort, filterByGroup } from '../lib/search/query';
+import type { PromptItem, GradientColor } from '../contracts/schemas';
 import { builtins } from '../lib/templates';
 import { getLlmClient } from '../lib/llm';
+import { GroupTabs } from './components/GroupTabs';
+import { GroupModal } from './components/GroupModal';
+import { PromptForm } from '../shared/components/PromptForm';
+import { ConfirmModal } from '../shared/components/ConfirmModal';
 
 function GearButton() {
   return (
@@ -25,7 +32,10 @@ function GearButton() {
 
 export default function App() {
   const [items, setItems] = useState<PromptItem[]>([]);
+  const [groups, setGroups] = useState<Awaited<ReturnType<typeof listGroups>>>([]);
   const [query, setQuery] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -47,8 +57,12 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const current = await listItems();
-      setItems(current);
+      const [currentItems, currentGroups] = await Promise.all([
+        listItems(),
+        listGroups()
+      ]);
+      setItems(currentItems);
+      setGroups(currentGroups);
       // 自動聚焦
       inputRef.current?.focus();
       // 載入 LLM 設定
@@ -68,16 +82,43 @@ export default function App() {
         if (f.disableLlm) setPreferLlm(false);
       } catch { /* noop */ }
     })();
-    const off = onChanged((next) => setItems(next));
-    return () => off();
+    
+    const offItems = onChanged((next) => setItems(next));
+    const offGroups = onGroupsChanged((next) => setGroups(next));
+    
+    // 全局鍵盤快捷鍵監聽
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      // Cmd+Shift+K - 切換群組選擇模式
+      if (e.key === 'k' && e.metaKey && e.shiftKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        // 這裡可以實現群組選擇的鍵盤導航
+        // 暫時先聚焦到搜索框
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    
+    return () => {
+      offItems();
+      offGroups();
+      window.removeEventListener('keydown', handleGlobalKeyDown);
+    };
   }, []);
 
-  const filtered = useMemo(() => filterAndSort(items, query), [items, query]);
+  const filtered = useMemo(() => {
+    let result = filterAndSort(items, query);
+    // 應用群組過濾
+    if (selectedGroupId !== null) {
+      result = filterByGroup(result, selectedGroupId);
+    }
+    return result;
+  }, [items, query, selectedGroupId]);
 
   useEffect(() => {
     // 查詢變更時重置 activeIndex
     setActiveIndex(0);
-  }, [query]);
+  }, [query, selectedGroupId]);
 
   async function copyText(text: string): Promise<boolean> {
     try {
@@ -99,6 +140,69 @@ export default function App() {
       }
     }
   }
+
+  const handleGroupSelect = (groupId: string | null) => {
+    setSelectedGroupId(groupId);
+    setQuery(''); // 切換群組時清空搜索
+  };
+
+  const handleAddGroup = () => {
+    setIsGroupModalOpen(true);
+  };
+
+  const handleCreateGroup = async (data: { name: string; color: GradientColor }) => {
+    try {
+      await createGroup(data);
+      setIsGroupModalOpen(false);
+    } catch (error) {
+      console.error('Failed to create group:', error);
+    }
+  };
+
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [editingPrompt, setEditingPrompt] = useState<PromptItem | null>(null);
+  
+  // 確認對話框狀態
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'danger'
+  });
+
+  const handleEditPrompt = (prompt: PromptItem) => {
+    setEditingPrompt(prompt);
+    setIsPromptModalOpen(true);
+  };
+
+  const handleSavePrompt = async (data: Omit<PromptItem, 'id' | 'updatedAt'> & { id?: string }) => {
+    try {
+      const item: PromptItem = {
+        id: data.id || `id-${Date.now()}`,
+        title: data.title,
+        content: data.content,
+        tags: data.tags,
+        group: data.group,
+        favorite: data.favorite,
+        updatedAt: Date.now(),
+      };
+      
+      await upsertItem(item);
+      const next = await listItems();
+      setItems(next);
+      setIsPromptModalOpen(false);
+      setEditingPrompt(null);
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
+  };
 
   async function onCopy(content: string, id: string) {
     const ok = await copyText(content);
@@ -144,6 +248,56 @@ export default function App() {
           目前為唯讀模式：僅可複製
         </div>
       )}
+      {/* 群組分頁 */}
+      <GroupTabs
+        groups={groups}
+        selectedGroupId={selectedGroupId}
+        onGroupSelect={handleGroupSelect}
+        onAddGroup={handleAddGroup}
+      />
+
+      {/* 群組刪除按鈕（右下角） */}
+      {selectedGroupId && !readonly && (
+        <button
+          aria-label="刪除群組"
+          title="刪除群組"
+          onClick={() => {
+            const group = groups.find(g => g.id === selectedGroupId);
+            if (group) {
+              setConfirmModal({
+                isOpen: true,
+                title: '確認刪除群組',
+                message: `你確定要刪除群組「${group.name}」嗎？此操作無法復原。`,
+                type: 'danger',
+                onConfirm: async () => {
+                  await deleteGroup(selectedGroupId);
+                  setSelectedGroupId(null);
+                  setConfirmModal({ ...confirmModal, isOpen: false });
+                }
+              });
+            }
+          }}
+          style={{
+            position: 'absolute',
+            bottom: 8,
+            right: 8,
+            padding: '6px',
+            borderRadius: 6,
+            border: '1px solid #fca5a5',
+            background: '#fff5f5',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#dc2626">
+            <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2H4V6h4V4a1 1 0 0 1 1-1Zm2 4h2V5h-2v2ZM7 10h2v9H7v-9Zm4 0h2v9h-2v-9Zm4 0h2v9h-2v-9Z"/>
+          </svg>
+        </button>
+      )}
+
       <input
         ref={inputRef}
         value={query}
@@ -204,30 +358,59 @@ export default function App() {
                   {copiedId === it.id ? '已複製' : '複製'}
                 </button>
                 {!readonly && (
-                  <button
-                    aria-label="刪除"
-                    title="刪除"
-                    onClick={async () => {
-                      if (!confirm('確定要刪除此 Prompt？此操作無法復原。')) return;
-                      await deleteItem(it.id);
-                      const next = await listItems();
-                      setItems(next);
-                    }}
-                    style={{
-                      padding: '6px',
-                      borderRadius: 6,
-                      border: '1px solid #fca5a5',
-                      background: '#fff5f5',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-                      <path fill="#dc2626" d="M9 3h6a1 1 0 0 1 1 1v2h4v2H4V6h4V4a1 1 0 0 1 1-1Zm2 4h2V5h-2v2ZM7 10h2v9H7v-9Zm4 0h2v9h-2v-9Zm4 0h2v9h-2v-9Z"/>
-                    </svg>
-                  </button>
+                  <>
+                    <button
+                      aria-label="編輯"
+                      title="編輯"
+                      onClick={() => handleEditPrompt(it)}
+                      style={{
+                        padding: '6px',
+                        borderRadius: 6,
+                        border: '1px solid #ddd',
+                        background: '#f8f8f8',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
+                    </button>
+                    <button
+                      aria-label="刪除"
+                      title="刪除"
+                      onClick={() => {
+                        setConfirmModal({
+                          isOpen: true,
+                          title: '確認刪除 Prompt',
+                          message: `你確定要刪除「${it.title}」嗎？此操作無法復原。`,
+                          type: 'danger',
+                          onConfirm: async () => {
+                            await deleteItem(it.id);
+                            const next = await listItems();
+                            setItems(next);
+                            setConfirmModal({ ...confirmModal, isOpen: false });
+                          }
+                        });
+                      }}
+                      style={{
+                        padding: '6px',
+                        borderRadius: 6,
+                        border: '1px solid #fca5a5',
+                        background: '#fff5f5',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#dc2626">
+                        <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2H4V6h4V4a1 1 0 0 1 1-1Zm2 4h2V5h-2v2ZM7 10h2v9H7v-9Zm4 0h2v9h-2v-9Zm4 0h2v9h-2v-9Z"/>
+                      </svg>
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -243,8 +426,46 @@ export default function App() {
           </div>
         ))}
         {filtered.length === 0 && (
-          <div style={{ color: '#666' }}>
-            尚無資料，請至 Options 新增
+          <div style={{ 
+            color: '#666', 
+            textAlign: 'center',
+            padding: 20
+          }}>
+            <div style={{ marginBottom: 12 }}>
+              尚無資料{selectedGroupId ? '在此群組中' : ''}
+            </div>
+            {!readonly && selectedGroupId && (
+              <button
+                onClick={() => {
+                  // 快速新增到當前群組
+                  setEditingPrompt({
+                    id: '',
+                    title: '',
+                    content: '',
+                    tags: [],
+                    group: selectedGroupId,
+                    favorite: false,
+                    updatedAt: Date.now()
+                  });
+                  setIsPromptModalOpen(true);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  border: '1px solid #3b82f6',
+                  background: '#3b82f6',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+              >
+                + 新增 Prompt
+              </button>
+            )}
+            {!selectedGroupId && (
+              <div style={{ fontSize: 12, color: '#999', marginTop: 8 }}>
+                請至 Options 頁面新增
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -320,6 +541,66 @@ export default function App() {
         </div>
       </div>
     </div>
+
+    {/* 群組模態框 */}
+    <GroupModal
+      isOpen={isGroupModalOpen}
+      onClose={() => setIsGroupModalOpen(false)}
+      onSubmit={handleCreateGroup}
+      mode="create"
+    />
+
+    {/* Prompt 編輯模態框 */}
+    {isPromptModalOpen && (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000
+      }}>
+        <div style={{
+          background: '#fff',
+          padding: 20,
+          borderRadius: 8,
+          width: 400,
+          maxWidth: '90vw',
+          maxHeight: '80vh',
+          overflow: 'auto',
+          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+        }}>
+          <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600 }}>
+            編輯 Prompt
+          </h3>
+          <PromptForm
+            initialData={editingPrompt || undefined}
+            onSubmit={handleSavePrompt}
+            onCancel={() => {
+              setIsPromptModalOpen(false);
+              setEditingPrompt(null);
+            }}
+            submitButtonText="更新"
+          />
+        </div>
+      </div>
+    )}
+
+    {/* 統一確認對話框 */}
+    <ConfirmModal
+      isOpen={confirmModal.isOpen}
+      title={confirmModal.title}
+      message={confirmModal.message}
+      type={confirmModal.type}
+      onConfirm={confirmModal.onConfirm}
+      onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      confirmText="確認刪除"
+      cancelText="取消"
+    />
   </div>
   );
 }

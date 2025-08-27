@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { storage, listItems, upsertItem, deleteItem, exportJSON, importJSON, getSitePolicy, setSitePolicy, getFlags, setFlags, exportAll } from '../lib/storage/indexed';
 import type { PromptItem, Flags } from '../contracts/schemas';
+import { PromptForm } from '../shared/components/PromptForm';
 
 export default function OptionsApp() {
   const [key, setKey] = useState('');
@@ -176,46 +177,43 @@ export default function OptionsApp() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'calc(50% - 10px) calc(50% - 10px)', gap: 20, alignItems: 'start' }}>
         <div>
-          <label style={{ display: 'block', marginBottom: 6 }}>標題（必填）</label>
-          <input value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: '98%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: 6, boxSizing: 'border-box' }} />
-          <label style={{ display: 'block', margin: '10px 0 6px' }}>標籤（逗號分隔）</label>
-          <input value={tags} onChange={(e) => setTags(e.target.value)} style={{ width: '98%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: 6, boxSizing: 'border-box' }} />
-          <label style={{ display: 'block', margin: '10px 0 6px' }}>群組（可空）</label>
-          <input value={group} onChange={(e) => setGroup(e.target.value)} style={{ width: '98%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: 6, boxSizing: 'border-box' }} />
-          <label style={{ display: 'block', margin: '10px 0 6px' }}>內容（必填）</label>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={6} style={{ width: '98%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: 6, boxSizing: 'border-box' }} />
-          <div style={{ marginTop: 10 }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
+          <PromptForm
+            initialData={currentId ? {
+              id: currentId,
+              title,
+              tags: tags.split(',').map(s => s.trim()).filter(Boolean),
+              group: group || undefined,
+              content,
               favorite
-            </label>
-          </div>
+            } : undefined}
+            onSubmit={async (data) => {
+              const id = data.id || `id-${Date.now()}`;
+              const item: PromptItem = {
+                id,
+                title: data.title,
+                content: data.content,
+                tags: data.tags,
+                group: data.group,
+                favorite: data.favorite,
+                updatedAt: Date.now(),
+              };
+              
+              await upsertItem(item);
+              const next = await listItems();
+              setItems(next);
+              setCurrentId(id);
+              
+              // 更新本地表單狀態
+              setTitle(item.title);
+              setTags(item.tags.join(', '));
+              setGroup(item.group || '');
+              setContent(item.content);
+              setFavorite(item.favorite);
+            }}
+            submitButtonText={currentId ? '更新' : '新增'}
+          />
+          
           <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-            <button
-              onClick={async () => {
-                const id = currentId ?? `id-${Date.now()}`;
-                const item: PromptItem = {
-                  id,
-                  title: title.trim(),
-                  content: content.trim(),
-                  tags: tags.split(',').map((s) => s.trim()).filter(Boolean),
-                  group: group.trim() || undefined,
-                  favorite,
-                  updatedAt: Date.now(),
-                };
-                if (!item.title || !item.content) {
-                  alert('標題與內容為必填');
-                  return;
-                }
-                await upsertItem(item);
-                const next = await listItems();
-                setItems(next);
-                setCurrentId(id);
-              }}
-              style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ddd', background: '#f5f5f5', cursor: 'pointer' }}
-            >
-              {currentId ? '更新' : '新增'}
-            </button>
             <button
               onClick={async () => {
                 const bundle = await exportJSON();
@@ -273,19 +271,31 @@ export default function OptionsApp() {
               <div key={it.id} style={{ border: '1px solid #eee', borderRadius: 6, padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontWeight: 600 }}>{it.title}</div>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 6 }}>
                     <button
                       onClick={() => {
                         setCurrentId(it.id);
                         setTitle(it.title);
-                        setTags(it.tags.join(','));
+                        setTags(it.tags.join(', '));
                         setGroup(it.group || '');
                         setContent(it.content);
                         setFavorite(it.favorite);
                       }}
-                      style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#f8f8f8', cursor: 'pointer' }}
+                      style={{ 
+                        padding: '6px', 
+                        borderRadius: 6, 
+                        border: '1px solid #ddd', 
+                        background: '#f8f8f8', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="編輯"
                     >
-                      載入
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                      </svg>
                     </button>
                     <button
                       onClick={async () => {
@@ -296,9 +306,21 @@ export default function OptionsApp() {
                           setCurrentId(null);
                         }
                       }}
-                      style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#fff5f5', cursor: 'pointer' }}
+                      style={{ 
+                        padding: '6px', 
+                        borderRadius: 6, 
+                        border: '1px solid #fca5a5', 
+                        background: '#fff5f5', 
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                      title="刪除"
                     >
-                      刪除
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#dc2626">
+                        <path d="M9 3h6a1 1 0 0 1 1 1v2h4v2H4V6h4V4a1 1 0 0 1 1-1Zm2 4h2V5h-2v2ZM7 10h2v9H7v-9Zm4 0h2v9h-2v-9Zm4 0h2v9h-2v-9Z"/>
+                      </svg>
                     </button>
                   </div>
                 </div>

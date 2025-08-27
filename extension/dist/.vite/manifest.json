@@ -5,41 +5,44 @@
     "src": "../../../../../../crx-manifest",
     "isEntry": true
   },
-  "_client-C9yhCDaK.js": {
-    "file": "assets/client-C9yhCDaK.js",
-    "name": "client"
+  "_PromptForm-DwIRO6O0.js": {
+    "file": "assets/PromptForm-DwIRO6O0.js",
+    "name": "PromptForm",
+    "imports": [
+      "_indexed-BUvletge.js"
+    ]
   },
-  "_indexed-AT05rm9-.js": {
-    "file": "assets/indexed-AT05rm9-.js",
+  "_indexed-BUvletge.js": {
+    "file": "assets/indexed-BUvletge.js",
     "name": "indexed"
   },
   "options.html": {
-    "file": "assets/options-CSaZ5khc.js",
+    "file": "assets/options-HtmqUo-2.js",
     "name": "options",
     "src": "options.html",
     "isEntry": true,
     "imports": [
-      "_client-C9yhCDaK.js",
-      "_indexed-AT05rm9-.js"
+      "_PromptForm-DwIRO6O0.js",
+      "_indexed-BUvletge.js"
     ]
   },
   "popup.html": {
-    "file": "assets/popup-D0oPUQOg.js",
+    "file": "assets/popup-E-7SWCU7.js",
     "name": "popup",
     "src": "popup.html",
     "isEntry": true,
     "imports": [
-      "_client-C9yhCDaK.js",
-      "_indexed-AT05rm9-.js"
+      "_PromptForm-DwIRO6O0.js",
+      "_indexed-BUvletge.js"
     ]
   },
   "src/background/index.ts": {
-    "file": "assets/index.ts-BTK9AwsV.js",
+    "file": "assets/index.ts-BL-WfBJc.js",
     "name": "index.ts",
     "src": "src/background/index.ts",
     "isEntry": true,
     "imports": [
-      "_indexed-AT05rm9-.js"
+      "_indexed-BUvletge.js"
     ]
   }
 }
